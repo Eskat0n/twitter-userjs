@@ -3,16 +3,26 @@
 // @match https://twitter.com/*
 // ==/UserScript==
 
-var autoshow = true;
+var Settings = function () {
+    this.autoshow = localStorage['muyou.autoshow'] != 'false';
+};
+Settings.prototype = {
+    set: function (key, val) {
+        localStorage['muyou.' + key] = val.toString();
+        this[key] = val;
+    }
+}
+
+var settings = new Settings();
 var initialized = false;
 
 var toggleAutoshow = function () {
-    if (autoshow)
+    if (settings.autoshow)
         this.innerText = 'Autoshow [OFF]';
     else
         this.innerText = 'Autoshow [ON]';
 
-    autoshow = !autoshow;
+    settings.set('autoshow', !settings.autoshow);
 
     return false;
 };
@@ -23,7 +33,7 @@ var initialize = function (tabsPanel) {
     var autoshowLink = document.createElement('A');
     autoshowLink.className = 'tab-text';
     autoshowLink.setAttribute('href', '#');
-    autoshowLink.innerText = 'Autoshow [ON]';
+    autoshowLink.innerText = settings.autoshow ? 'Autoshow [ON]' : 'Autoshow [OFF]';
     autoshowLink.onclick = toggleAutoshow;
 
     var autoshowItem = document.createElement('LI');
@@ -50,7 +60,7 @@ var onNodeInserted = function (event) {
                 initialize(tabsPanel);
         }
 
-    if (!autoshow) return;
+    if (!settings.autoshow) return;
 
     if (event.srcElement.id && event.srcElement.id == 'new-tweets-bar')
         applyClick(event.srcElement);
