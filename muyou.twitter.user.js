@@ -77,6 +77,17 @@ var applyClick = function (element) {
     return element.dispatchEvent(event);
 };
 
+var onTweetTextAreaKeydown = function (event) {
+    var current = this.parentNode;
+    while (current.tagName != 'DIV' || current.className != 'tweet-box')
+        current = current.parentNode;
+
+    var tweetButton = current.querySelector('a.tweet-button.button');
+
+    if (event.ctrlKey && event.which == 13)
+        applyClick(tweetButton);
+};
+
 var filter = function (element) {
     //'stream-item'
 };
@@ -84,26 +95,32 @@ var filter = function (element) {
 var onNodeInserted = function (event) {
     if (!initialized)
         if (event.srcElement.querySelectorAll) {
-            var tabsPanel = event.srcElement.querySelectorAll('ul.stream-tabs')[0];
+            var tabsPanel = event.srcElement.querySelector('ul.stream-tabs');
 
             if (tabsPanel)
                 initialize(tabsPanel);
         }
+    if (event.srcElement.querySelectorAll) {
+        var textArea = event.srcElement.querySelector('textarea.twitter-anywhere-tweet-box-editor');
 
-    if (!settings.autoshow) return;
+        if (textArea)
+            textArea.addEventListener('keydown', onTweetTextAreaKeydown);
+    }
+    if (event.srcElement && event.srcElement.tagName == 'TEXTAREA' && event.srcElement.className == 'twitter-anywhere-tweet-box-editor')
+        event.srcElement.addEventListener('keydown', onTweetTextAreaKeydown);
 
-    if (event.srcElement.id && event.srcElement.id == 'new-tweets-bar')
+    if (settings.autoshow && event.srcElement.id && event.srcElement.id == 'new-tweets-bar')
         applyClick(event.srcElement);
 
     filter(event.srcElement);
 };
 
-// init global nav panel settings
 var showSettings = function () {
 
 };
 
-var globalNav = document.querySelectorAll('#global-nav ul')[0];
+// init global nav panel settings
+var globalNav = document.querySelector('#global-nav ul');
 
 var settingsLink = document.createElement('A');
 settingsLink.setAttribute('href', '#');
