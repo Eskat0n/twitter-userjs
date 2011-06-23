@@ -84,8 +84,12 @@ var onTweetTextAreaKeydown = function (event) {
 
     var tweetButton = current.querySelector('a.tweet-button.button');
 
-    if (event.ctrlKey && event.which == 13)
+    if (event.ctrlKey && event.which == 13) {
         applyClick(tweetButton);
+
+        event.srcElement.style.width = '482px';
+        event.srcElement.style.height = '56px';
+    }
 };
 
 var filter = function (element) {
@@ -103,8 +107,15 @@ var onNodeInserted = function (event) {
     if (event.srcElement.querySelectorAll) {
         var textArea = event.srcElement.querySelector('textarea.twitter-anywhere-tweet-box-editor');
 
-        if (textArea)
+        if (textArea) {
             textArea.addEventListener('keydown', onTweetTextAreaKeydown);
+
+            var tweet = localStorage['muyou.tweet'];
+            if (tweet) {
+                textArea.value = tweet;
+                localStorage.removeItem('muyou.tweet');
+            }
+        }
     }
     if (event.srcElement && event.srcElement.tagName == 'TEXTAREA' && event.srcElement.className == 'twitter-anywhere-tweet-box-editor')
         event.srcElement.addEventListener('keydown', onTweetTextAreaKeydown);
@@ -113,6 +124,21 @@ var onNodeInserted = function (event) {
         applyClick(event.srcElement);
 
     filter(event.srcElement);
+};
+
+var onPageUnloaded = function () {
+    localStorage.removeItem('muyou.tweet');
+
+    var textAreas = document.querySelectorAll('textarea.twitter-anywhere-tweet-box-editor');
+    if (textAreas.length > 0)
+        localStorage['muyou.tweet'] = '';
+
+    for (var i = 0; i < textAreas.length; i++) {
+        var value = textAreas[i].value;
+
+        if (value && value !== '')
+            localStorage['muyou.tweet'] += value;
+    }
 };
 
 var showSettings = function () {
@@ -134,5 +160,6 @@ settingsItem.appendChild(settingsLink);
 globalNav.appendChild(settingsItem);
 // end init
 
-document.addEventListener("DOMNodeInserted", onNodeInserted);
+document.addEventListener('DOMNodeInserted', onNodeInserted);
+window.addEventListener('unload', onPageUnloaded);
 
