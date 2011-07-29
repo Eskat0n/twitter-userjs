@@ -1,7 +1,35 @@
 // ==UserScript==
 // @match http://twitter.com/*
 // @match https://twitter.com/*
+// @match http://api.twitter.com/*
+// @match https://api.twitter.com/*
 // ==/UserScript==
+
+// Redirect to api.twitter.com if on twitter.com since there are no other way to query Twitter API due to crossdomain policy
+if (location.hostname == 'twitter.com') {
+	location.href = '//api.twitter.com';
+	return;
+}
+
+// Dissallow UserJS execution on receiver.html page
+if (location.pathname == '/receiver.html')
+	return;
+
+var get = function (url, callback) {
+	var request = new XMLHttpRequest();
+	request.open('GET', url, true);
+	request.setRequestHeader('X-Phx', true);
+	request.onreadystatechange = function () {
+		if (request.readyState == 4 && request.status == 200)
+			callback.call(request, request.responseText);
+	};
+	request.send(null);
+};
+var getJson = function (url, callback) {
+	get(url, function (data) {
+		callback.call(this, eval(data));
+	});
+};
 
 var Settings = function () {
     this.autoshow = localStorage['muyou.autoshow'] != 'false';
@@ -96,6 +124,16 @@ var filter = function (element) {
     //'stream-item'
 };
 
+var messagesMenuItem = document.querySelector('#global-nav-messages a');
+var messagesCount = document.createElement('SPAN');
+messagesMenuItem.appendChild(messagesCount);
+
+setInterval(function () {
+	getJson('/1/direct_messages.json?include_entities=true', function (data) {
+		messagesCount.innerHTML = '&nbsp;(' + data.length + ')';	
+	});
+}, 30*1000);
+
 var onNodeInserted = function (event) {
     if (!initialized)
         if (event.srcElement.querySelectorAll) {
@@ -117,8 +155,9 @@ var onNodeInserted = function (event) {
             }
         }
     }
+
     if (event.srcElement && event.srcElement.tagName == 'TEXTAREA' && event.srcElement.className == 'twitter-anywhere-tweet-box-editor')
-        event.srcElement.addEventListener('keydown', onTweetTextAreaKeydown);
+    	event.srcElement.addEventListener('keydown', onTweetTextAreaKeydown);
 
     if (settings.autoshow && event.srcElement.id && event.srcElement.id == 'new-tweets-bar')
         applyClick(event.srcElement);
