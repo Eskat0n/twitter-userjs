@@ -27,3 +27,9 @@ Designed to work on Google Chrome. Tested on version 12.
 
 * Implement tweets filtering by selected keywords.
 * Add settings dialog to configure UserJs script behavior.
+* Statistics for navigation by links from tweets.
+* Coding TODOs:
+ * Implement feature-based structure (features can be turned on|off in settings);
+ * Implement `filter` method to process each of inserted elements;
+ * Create methods for matching elements against CSS selectors (ofcourse with `is` method as well);
+ * Use of IndexedDb for storing settings and statistics.
