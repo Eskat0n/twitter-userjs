@@ -31,6 +31,7 @@ tw.__features = {};
 
 tw.Feature = function (name, options) {
     this.name = name;
+    this.fullName = options.fullName;
     this.__load = options.load;
     this.startup = options.startup;
     this.teardown = options.teardown;
