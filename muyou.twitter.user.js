@@ -10,16 +10,17 @@
  */
 
 var tw = {};
+tw.__isEnabled = true;
 
 // Redirect to api.twitter.com if on twitter.com since there are no other way to query Twitter API due to crossdomain policy
 if (location.hostname == 'twitter.com') {
 	location.href = '//api.twitter.com' + location.pathname;
-	return;
+	tw.__isEnabled = false;
 }
 
 // Dissallow UserJS execution on receiver.html page
 if (location.pathname == '/receiver.html')
-	return;
+	tw.__isEnabled = false;
 
 /*
  * Infrastructure code
@@ -34,7 +35,13 @@ tw.Feature = function (name, options) {
     this.startup = options.startup;
     this.teardown = options.teardown;
 
-    var isEnabled = localStorage['muyou.feature.' + name];
+    this.storageName = 'muyou.feature.' + name;
+
+    this.opt = {};
+    for (var key in options)
+        this.opt[key] = options[key];
+
+    var isEnabled = localStorage[this.storageName];
     if (isEnabled === undefined)
         this.isEnabled = true;
 };
@@ -44,7 +51,7 @@ tw.Feature.prototype = {
             return;
 
         if (this.__load)
-            this.__load();
+            this.__load.call(this);
         this.startup();
     },
     enable: function () {
@@ -62,11 +69,11 @@ tw.Feature.prototype = {
         this.teardown();
     },
     get isEnabled () {
-        var featureState = localStorage['muyou.feature.' + this.name];
+        var featureState = localStorage[this.storageName];
         return featureState === 'enabled';
     },
     set isEnabled (value) {
-        localStorage['muyou.feature.' + name] = value ? 'enabled' : 'disabled';
+        localStorage[this.storageName] = value ? 'enabled' : 'disabled';
     }
 };
 
@@ -201,7 +208,15 @@ tw.getJson = function (url, callback) {
 
 tw.feature('autoshow', {
     fullName: 'New tweets autoshow',
+    load: function () {
 
+    },
+    startup: function () {
+
+    },
+    teardown: function () {
+
+    }
 });
 
 var initialized = false;
