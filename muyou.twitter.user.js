@@ -6,14 +6,95 @@
 // ==/UserScript==
 
 // Redirect to api.twitter.com if on twitter.com since there are no other way to query Twitter API due to crossdomain policy
+
+/*
+ * Bootstrap
+ */
+
+var tw = {};
+tw.__enable = true;
+
 if (location.hostname == 'twitter.com') {
-	location.href = '//api.twitter.com';
-	return;
+	location.href = '//api.twitter.com' + location.pathname;
+	tw.__enable = false;
 }
 
 // Dissallow UserJS execution on receiver.html page
 if (location.pathname == '/receiver.html')
-	return;
+	tw.__enable = false;
+
+/*
+ * Infrastructure code
+ */
+
+tw.__features = {};
+
+tw.Feature = function (name, options) {
+    this.name = name;
+    this.__load = options.load;
+    this.startup = options.startup;
+    this.teardown = options.teardown;
+
+    var isEnabled = localStorage['muyou.feature.' + name];
+    if (isEnabled === undefined)
+        this.isEnabled = true;
+};
+tw.Feature.prototype = {
+    load: function () {
+        if (!isEnabled)
+            return;
+
+        if (this.__load)
+            this.__load();
+        this.startup();
+    },
+    enable: function () {
+        if (!isEnabled)
+            return;
+
+        isEnabled = true;
+        this.startup();
+    },
+    disable: function () {
+        if (!isEnabled)
+            return;
+
+        isEnabled = true;
+        this.teardown();
+    },
+    get isEnabled () {
+        var featureState = localStorage['muyou.feature.' + this.name];
+        return featureState === 'enabled';
+    },
+    set isEnabled (value) {
+        localStorage['muyou.feature.' + name] = value ? 'enabled' : 'disabled';
+    }
+};
+
+tw.feature = function (name, options) {
+    tw.__features[name] = new tw.Feature(name, options);
+};
+
+tw.loadFeatures = function () {
+    for (var name in tw.__features)
+        tw.__features[name].load();
+};
+
+/*
+ * Filtering implementation
+ */
+
+tw.filter = function (type, selector) {
+
+};
+
+/*
+ * Utility code
+ */
+
+/*
+ * Actual UserJS code
+ */
 
 var get = function (url, callback) {
 	var request = new XMLHttpRequest();
@@ -31,42 +112,6 @@ var getJson = function (url, callback) {
 	});
 };
 
-var Settings = function () {
-    this.autoshow = localStorage['muyou.autoshow'] != 'false';
-    this.filters = [];
-
-    var filters = localStorage['muyou.filters'];
-    if (filters) this.filters = eval(filters);
-};
-Settings.prototype = {
-    _join: function (array) {
-        var aggregate = '';
-        for (var i = 0; i < array.length; i++) {
-            var item = array[i];
-            if (i != 0) aggregate += ',';
-            aggregate += '"' + item.replace('"', '\\"') + '"';
-        }
-        return aggregate;
-    },
-    set: function (key, val) {
-        localStorage['muyou.' + key] = val.toString();
-        this[key] = val;
-    },
-    setFilters: function (filters) {
-        this.filters = filters;
-
-        var serializedFilters = '[';
-        for (var i = 0; i < filters.length; i++) {
-            var filter = filters[i];
-            serializedFilters += '{"nick":"' + filter.nick + '","words":[' + this._join(filter.words) + ']}';
-        }
-        serializedFilters += ']';
-
-        localStorage['muyou.filters'] = serializedFilters;
-    }
-};
-
-var settings = new Settings();
 var initialized = false;
 
 var toggleAutoshow = function () {
