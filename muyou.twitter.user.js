@@ -5,23 +5,21 @@
 // @match https://api.twitter.com/*
 // ==/UserScript==
 
-// Redirect to api.twitter.com if on twitter.com since there are no other way to query Twitter API due to crossdomain policy
-
 /*
  * Bootstrap
  */
 
 var tw = {};
-tw.__enable = true;
 
+// Redirect to api.twitter.com if on twitter.com since there are no other way to query Twitter API due to crossdomain policy
 if (location.hostname == 'twitter.com') {
 	location.href = '//api.twitter.com' + location.pathname;
-	tw.__enable = false;
+	return;
 }
 
 // Dissallow UserJS execution on receiver.html page
 if (location.pathname == '/receiver.html')
-	tw.__enable = false;
+	return;
 
 /*
  * Infrastructure code
@@ -76,7 +74,7 @@ tw.feature = function (name, options) {
     tw.__features[name] = new tw.Feature(name, options);
 };
 
-tw.loadFeatures = function () {
+tw.initializeFeatures = function () {
     for (var name in tw.__features)
         tw.__features[name].load();
 };
@@ -85,19 +83,97 @@ tw.loadFeatures = function () {
  * Filtering implementation
  */
 
-tw.filter = function (type, selector) {
+tw.__filters = [];
 
+tw.Filter = function (times, selector, action) {
+    this.__isOnce = times == 'once';
+    this.__selector = selector;
+    this.__action = action;
+};
+tw.Filter.prototype = {
+    __isActive: true,
+    execute: function (element) {
+        if (!this.__isActive)
+            return;
+
+        var checkResult = this.__selector.check(element);
+        if (!checkResult)
+            return;
+
+        this.__action(element, this.__selector.selection);
+        if (this.__isOnce)
+            this.__isActive = false;
+    }
+};
+
+tw.Selector = function (selector, isSelf) {
+    this.__isSelf = isSelf !== undefined;
+    this.__selector = selector;
+};
+tw.Selector.prototype = {
+    check: function (element) {
+        if (this.__isSelf) {
+            var elementClone = element.cloneNode(true);
+
+            var innerContainer = document.createElement('DIV');
+            innerContainer.appendChild(elementClone);
+            innerContainer.setAttribute('id', 'muyou');
+
+            var outerContainer = document.createElement('DIV');
+            outerContainer.appendChild(innerContainer);
+
+            this.selection = outerContainer.querySelectorAll('#muyou > ' + this.__selector);
+
+            return this.selection == 1;
+        } else {
+            this.selection = element.querySelectorAll(this.__selector);
+            return this.selection.length > 0;
+        }
+    }
+};
+
+tw.Predicate = function (predicate) {
+    this.check = predicate;
+};
+
+tw.is = function (selector) {
+    return new tw.Selector(selector, true);
+};
+
+tw.__createSelector = function (value) {
+    if (typeof value == 'string' || value instanceof String)
+        return new tw.Selector(value);
+    if (typeof selector == 'function')
+        return new tw.Predicate(value);
+    return value;
+};
+
+tw.filter = function (times, selector, action) {
+    var filter = new tw.Filter(times, tw.__createSelector(selector), action);
+    tw.__filters.push(filter);
+};
+
+tw.initializeFilters = function () {
+    document.addEventListener('DOMNodeInserted', function (event) {
+        for (var i = 0; i < tw.__filters.length; i++)
+            tw.__filters[i].execute(event.srcElement);
+    });
 };
 
 /*
  * Utility code
  */
 
-/*
- * Actual UserJS code
- */
+// Adds applyClick method to each HTML DOM element which emulates left mouse button click on this element
+HTMLElement.prototype.applyClick = function () {
+    var event = document.createEvent("MouseEvents");
+    event.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
 
-var get = function (url, callback) {
+    return this.dispatchEvent(event);
+};
+
+// AJAX get request helper function
+tw.get = function (url, callback) {
 	var request = new XMLHttpRequest();
 	request.open('GET', url, true);
 	request.setRequestHeader('X-Phx', true);
@@ -107,11 +183,26 @@ var get = function (url, callback) {
 	};
 	request.send(null);
 };
-var getJson = function (url, callback) {
+
+// AJAX get request helper function which returns JSON data to the callback
+tw.getJson = function (url, callback) {
 	get(url, function (data) {
 		callback.call(this, eval(data));
 	});
 };
+
+/*
+ * Actual UserJS code
+ */
+
+/*
+ * Initialization
+ */
+
+tw.feature('autoshow', {
+    fullName: 'New tweets autoshow',
+
+});
 
 var initialized = false;
 
@@ -144,13 +235,6 @@ var initialize = function (tabsPanel, globalNav) {
     initialized = true;
 };
 
-var applyClick = function (element) {
-    var event = document.createEvent("MouseEvents");
-    event.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-
-    return element.dispatchEvent(event);
-};
-
 var onTweetTextAreaKeydown = function (event) {
     var current = this.parentNode;
     while (current.tagName != 'DIV' || current.className != 'tweet-box')
@@ -164,10 +248,6 @@ var onTweetTextAreaKeydown = function (event) {
         event.srcElement.style.width = '482px';
         event.srcElement.style.height = '56px';
     }
-};
-
-var filter = function (element) {
-    //'stream-item'
 };
 
 var messagesMenuItem = document.querySelector('#global-nav-messages a');
@@ -245,6 +325,6 @@ settingsItem.appendChild(settingsLink);
 globalNav.appendChild(settingsItem);
 // end init
 
-document.addEventListener('DOMNodeInserted', onNodeInserted);
+
 window.addEventListener('unload', onPageUnloaded);
 
