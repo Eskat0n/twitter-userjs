@@ -47,12 +47,13 @@ tw.Feature = function (name, options) {
 };
 tw.Feature.prototype = {
     load: function () {
-        if (!isEnabled)
-            return;
-
         if (this.__load)
             this.__load.call(this);
-        this.startup();
+
+        if (isEnabled)
+            this.startup();
+        else
+            this.teardown();
     },
     enable: function () {
         if (!isEnabled)
@@ -215,46 +216,40 @@ tw.getJson = function (url, callback) {
 tw.feature('autoshow', {
     fullName: 'New tweets autoshow',
     load: function () {
+        var me = this;
+        var toggleAutoshow = function () {
+            var autoshow = me.getProperty('autoshow') == 'enabled';
+            this.innerText = autoshow
+                    ? 'Autoshow [OFF]'
+                    : 'Autoshow [ON]';
 
+            me.setProperty('autoshow', autoshow ? 'disabled' : 'enabled');
+            return false;
+        };
+
+        tw.filter('once', 'ul.stream-tabs', function (element, selection) {
+            me.autoshowLink = document.createElement('A');
+            me.autoshowLink.className = 'tab-text';
+            me.autoshowLink.setAttribute('href', '#');
+            me.autoshowLink.innerText =  me.getProperty('autoshow') == 'enabled' ? 'Autoshow [ON]' : 'Autoshow [OFF]';
+            me.autoshowLink.addEventListener('click', toggleAutoshow);
+
+            me.autoshowItem = document.createElement('LI');
+            me.autoshowItem.className = 'stream-tab autoshow';
+            me.autoshowItem.style.display = me.isEnabled ? 'block' : 'hidden';
+            me.autoshowItem.appendChild(me.autoshowLink);
+
+            selection[0].appendChild(me.autoshowItem);
+        });
     },
     startup: function () {
-
+        if (this.autoshowItem)
+            this.autoshowItem.style.display = 'block';
     },
     teardown: function () {
-
+        this.autoshowItem.display = 'hidden';
     }
 });
-
-var initialized = false;
-
-var toggleAutoshow = function () {
-    if (settings.autoshow)
-        this.innerText = 'Autoshow [OFF]';
-    else
-        this.innerText = 'Autoshow [ON]';
-
-    settings.set('autoshow', !settings.autoshow);
-
-    return false;
-};
-
-var initialize = function (tabsPanel, globalNav) {
-    if (initialized) return;
-
-    var autoshowLink = document.createElement('A');
-    autoshowLink.className = 'tab-text';
-    autoshowLink.setAttribute('href', '#');
-    autoshowLink.innerText = settings.autoshow ? 'Autoshow [ON]' : 'Autoshow [OFF]';
-    autoshowLink.onclick = toggleAutoshow;
-
-    var autoshowItem = document.createElement('LI');
-    autoshowItem.className = 'stream-tab autoshow';
-    autoshowItem.appendChild(autoshowLink);
-
-    tabsPanel.appendChild(autoshowItem);
-
-    initialized = true;
-};
 
 var onTweetTextAreaKeydown = function (event) {
     var current = this.parentNode;
@@ -282,13 +277,6 @@ setInterval(function () {
 }, 30*1000);
 
 var onNodeInserted = function (event) {
-    if (!initialized)
-        if (event.srcElement.querySelectorAll) {
-            var tabsPanel = event.srcElement.querySelector('ul.stream-tabs');
-
-            if (tabsPanel)
-                initialize(tabsPanel);
-        }
     if (event.srcElement.querySelectorAll) {
         var textArea = event.srcElement.querySelector('textarea.twitter-anywhere-tweet-box-editor');
 
