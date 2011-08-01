@@ -50,23 +50,23 @@ tw.Feature.prototype = {
         if (this.__load)
             this.__load.call(this);
 
-        if (isEnabled)
+        if (this.isEnabled)
             this.startup();
         else
             this.teardown();
     },
     enable: function () {
-        if (!isEnabled)
+        if (!this.isEnabled)
             return;
 
-        isEnabled = true;
+        this.isEnabled = true;
         this.startup();
     },
     disable: function () {
-        if (!isEnabled)
+        if (!this.isEnabled)
             return;
 
-        isEnabled = true;
+        this.isEnabled = true;
         this.teardown();
     },
     get isEnabled () {
