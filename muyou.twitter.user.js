@@ -126,6 +126,9 @@ tw.Selector = function (selector, isSelf) {
 };
 tw.Selector.prototype = {
     check: function (element) {
+        if (!element.querySelectorAll)
+            return false;
+
         if (this.__isSelf) {
             var elementClone = element.cloneNode(true);
 
