@@ -74,6 +74,12 @@ tw.Feature.prototype = {
     },
     set isEnabled (value) {
         localStorage[this.storageName] = value ? 'enabled' : 'disabled';
+    },
+    getProperty: function (name) {
+        return localStorage[this.storageName + '.' + name];
+    },
+    setProperty: function (name, value) {
+        localStorage[this.storageName + '.' + name] = value;
     }
 };
 
