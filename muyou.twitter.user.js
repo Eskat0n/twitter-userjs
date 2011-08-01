@@ -214,7 +214,7 @@ tw.getJson = function (url, callback) {
  */
 
 tw.feature('autoshow', {
-    fullName: 'New tweets autoshow',
+    fullName: 'Autoshow for new tweets',
     load: function () {
         var me = this;
         var toggleAutoshow = function () {
@@ -241,6 +241,11 @@ tw.feature('autoshow', {
 
             selection[0].appendChild(me.autoshowItem);
         });
+
+        tw.filter('always', tw.is('#new-tweets-bar'), function (element) {
+            if (me.isEnabled && me.getProperty('autoshow') == 'enabled')
+                element.applyClick();
+        });
     },
     startup: function () {
         if (this.autoshowItem)
@@ -248,6 +253,31 @@ tw.feature('autoshow', {
     },
     teardown: function () {
         this.autoshowItem.display = 'hidden';
+    }
+});
+
+tw.feature('messages_count', {
+    fullName: 'Show new direct messages count',
+    load: function () {
+        var messagesMenuItem = document.querySelector('#global-nav-messages a');
+        this.messagesCount = document.createElement('SPAN');
+        this.messagesCount.style.display = 'hidden';
+        messagesMenuItem.appendChild(this.messagesCount);
+    },
+    startup: function () {
+        this.messagesCount.style.display = 'inline';
+
+        this.interval = setInterval(function () {
+            tw.getJson('/1/direct_messages.json?include_entities=true', function (data) {
+                this.messagesCount.innerHTML = '&nbsp;(' + data.length + ')';
+            });
+        }, 30*1000);
+    },
+    teardown: function () {
+        this.messagesCount.style.display = 'hidden';
+
+        if (this.interval)
+            clearInterval(this.interval);
     }
 });
 
@@ -266,16 +296,6 @@ var onTweetTextAreaKeydown = function (event) {
     }
 };
 
-var messagesMenuItem = document.querySelector('#global-nav-messages a');
-var messagesCount = document.createElement('SPAN');
-messagesMenuItem.appendChild(messagesCount);
-
-setInterval(function () {
-	getJson('/1/direct_messages.json?include_entities=true', function (data) {
-		messagesCount.innerHTML = '&nbsp;(' + data.length + ')';	
-	});
-}, 30*1000);
-
 var onNodeInserted = function (event) {
     if (event.srcElement.querySelectorAll) {
         var textArea = event.srcElement.querySelector('textarea.twitter-anywhere-tweet-box-editor');
@@ -293,11 +313,6 @@ var onNodeInserted = function (event) {
 
     if (event.srcElement && event.srcElement.tagName == 'TEXTAREA' && event.srcElement.className == 'twitter-anywhere-tweet-box-editor')
     	event.srcElement.addEventListener('keydown', onTweetTextAreaKeydown);
-
-    if (settings.autoshow && event.srcElement.id && event.srcElement.id == 'new-tweets-bar')
-        applyClick(event.srcElement);
-
-    filter(event.srcElement);
 };
 
 var onPageUnloaded = function () {
@@ -313,10 +328,6 @@ var onPageUnloaded = function () {
         if (value && value !== '')
             localStorage['muyou.tweet'] += value;
     }
-};
-
-var showSettings = function () {
-
 };
 
 // init global nav panel settings
