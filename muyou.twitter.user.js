@@ -269,11 +269,13 @@ tw.feature('messages_count', {
         var me = this;
         me.messagesCount.style.display = 'inline';
 
-        me.interval = setInterval(function () {
+        var renewMessagesCount = function () {
             tw.getJson('/1/direct_messages.json?include_entities=true', function (data) {
                 me.messagesCount.innerHTML = '&nbsp;(' + data.length + ')';
             });
-        }, 30*1000);
+        };
+        me.interval = setInterval(renewMessagesCount, 30*1000);
+        renewMessagesCount();
     },
     teardown: function () {
         this.messagesCount.style.display = 'hidden';
