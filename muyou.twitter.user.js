@@ -212,6 +212,7 @@ tw.getJson = function (url, callback) {
  * Actual UserJS code
  */
 
+// Feature: autoshow option for new tweets appering into timeline
 tw.feature('autoshow', {
     fullName: 'Autoshow for new tweets',
     load: function () {
@@ -255,6 +256,7 @@ tw.feature('autoshow', {
     }
 });
 
+// Feature: display of new messages count on the global navigation panel
 tw.feature('messages_count', {
     fullName: 'Show new direct messages count',
     load: function () {
@@ -264,11 +266,12 @@ tw.feature('messages_count', {
         messagesMenuItem.appendChild(this.messagesCount);
     },
     startup: function () {
-        this.messagesCount.style.display = 'inline';
+        var me = this;
+        me.messagesCount.style.display = 'inline';
 
-        this.interval = setInterval(function () {
+        me.interval = setInterval(function () {
             tw.getJson('/1/direct_messages.json?include_entities=true', function (data) {
-                this.messagesCount.innerHTML = '&nbsp;(' + data.length + ')';
+                me.messagesCount.innerHTML = '&nbsp;(' + data.length + ')';
             });
         }, 30*1000);
     },
