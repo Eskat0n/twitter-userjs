@@ -212,10 +212,6 @@ tw.getJson = function (url, callback) {
  * Actual UserJS code
  */
 
-/*
- * Initialization
- */
-
 tw.feature('autoshow', {
     fullName: 'Autoshow for new tweets',
     load: function () {
@@ -283,6 +279,10 @@ tw.feature('messages_count', {
             clearInterval(this.interval);
     }
 });
+
+/*
+ * Initialization
+ */
 
 if (tw.__isEnabled) {
     tw.initializeFeatures();
