@@ -5,22 +5,24 @@
 // @match https://api.twitter.com/*
 // ==/UserScript==
 
+// IIFE hack to avoid errors for return statement outside of the function
+(function () {
+
 /*
  * Bootstrap
  */
 
 var tw = {};
-tw.__isEnabled = true;
 
 // Redirect to api.twitter.com if on twitter.com since there are no other way to query Twitter API due to crossdomain policy
 if (location.hostname == 'twitter.com') {
 	location.href = '//api.twitter.com' + location.pathname;
-	tw.__isEnabled = false;
+	return;
 }
 
 // Dissallow UserJS execution on receiver.html page
 if (location.pathname == '/receiver.html')
-	tw.__isEnabled = false;
+	return;
 
 /*
  * Infrastructure code
@@ -43,38 +45,37 @@ tw.Feature = function (name, options) {
 
     var isEnabled = localStorage[this.storageName];
     if (isEnabled === undefined)
-        this.isEnabled = true;
+        this.isEnabled(true);
 };
 tw.Feature.prototype = {
     load: function () {
         if (this.__load)
             this.__load.call(this);
 
-        if (this.isEnabled)
+        if (this.isEnabled())
             this.startup();
         else
             this.teardown();
     },
     enable: function () {
-        if (!this.isEnabled)
+        if (!this.isEnabled())
             return;
 
-        this.isEnabled = true;
+        this.isEnabled(true);
         this.startup();
     },
     disable: function () {
-        if (!this.isEnabled)
+        if (!this.isEnabled())
             return;
 
-        this.isEnabled = true;
+        this.isEnabled(true);
         this.teardown();
     },
-    get isEnabled () {
-        var featureState = localStorage[this.storageName];
-        return featureState === 'enabled';
-    },
-    set isEnabled (value) {
-        localStorage[this.storageName] = value ? 'enabled' : 'disabled';
+    isEnabled: function (value) {
+        if (value)
+            localStorage[this.storageName] = value ? 'enabled' : 'disabled';
+        else
+            return localStorage[this.storageName] === 'enabled';
     },
     getProperty: function (name) {
         return localStorage[this.storageName + '.' + name];
@@ -236,14 +237,14 @@ tw.feature('autoshow', {
 
             me.autoshowItem = document.createElement('LI');
             me.autoshowItem.className = 'stream-tab autoshow';
-            me.autoshowItem.style.display = me.isEnabled ? 'block' : 'hidden';
+            me.autoshowItem.style.display = me.isEnabled() ? 'block' : 'hidden';
             me.autoshowItem.appendChild(me.autoshowLink);
 
             selection[0].appendChild(me.autoshowItem);
         });
 
         tw.filter('always', tw.is('#new-tweets-bar'), function (element) {
-            if (me.isEnabled && me.getProperty('autoshow') == 'enabled')
+            if (me.isEnabled() && me.getProperty('autoshow') == 'enabled')
                 element.applyClick();
         });
     },
@@ -289,10 +290,8 @@ tw.feature('messages_count', {
  * Initialization
  */
 
-if (tw.__isEnabled) {
-    tw.initializeFeatures();
-    tw.initializeFilters();
-}
+tw.initializeFeatures();
+tw.initializeFilters();
 //
 //var onTweetTextAreaKeydown = function (event) {
 //    var current = this.parentNode;
@@ -361,3 +360,5 @@ if (tw.__isEnabled) {
 //
 //window.addEventListener('unload', onPageUnloaded);
 //
+
+})();
