@@ -31,6 +31,8 @@ if (location.pathname == '/receiver.html')
 tw.__features = {};
 
 tw.Feature = function (name, options) {
+    var me = this;
+
     this.name = name;
     this.fullName = options.fullName;
     this.__load = options.load;
@@ -39,49 +41,60 @@ tw.Feature = function (name, options) {
 
     this.storageName = 'muyou.feature.' + name;
 
+    // copy optional data/functions to the feature
     this.opt = {};
     for (var key in options)
-        this.opt[key] = options[key];
+        if (key != 'fullName' && key != 'load' && key != 'startup' && key != 'teardown' && key != 'properties')
+            this.opt[key] = options[key];
 
+    // create getters and setters for custom feature properties
+    if (options.properties)
+        for (var i = 0; i < options.properties; i++)
+        (function (propertyName) {
+            me.__defineGetter__(propertyName, function () {
+                return localStorage[me.storageName + '.' + propertyName];
+            });
+            me.__defineSetter__(propertyName, function (value) {
+                localStorage[me.storageName + '.' + propertyName] = value;
+            });
+        })(options.properties[i]);
+
+    // workaround for use of properties
+    this.__defineGetter__('isEnabled', function () {
+        return localStorage[this.storageName] === 'enabled';
+    });
+    this.__defineSetter__('isEnabled', function (value) {
+        localStorage[this.storageName] = value ? 'enabled' : 'disabled';
+    });
+
+    // initialize state (enable/disable) of the feature
     var isEnabled = localStorage[this.storageName];
     if (isEnabled === undefined)
-        this.isEnabled(true);
+        this.isEnabled = true;
 };
 tw.Feature.prototype = {
     load: function () {
         if (this.__load)
             this.__load.call(this);
 
-        if (this.isEnabled())
+        if (this.isEnabled)
             this.startup();
         else
             this.teardown();
     },
     enable: function () {
-        if (!this.isEnabled())
+        if (!this.isEnabled)
             return;
 
-        this.isEnabled(true);
+        this.isEnabled = true;
         this.startup();
     },
     disable: function () {
-        if (!this.isEnabled())
+        if (!this.isEnabled)
             return;
 
-        this.isEnabled(true);
+        this.isEnabled = true;
         this.teardown();
-    },
-    isEnabled: function (value) {
-        if (value)
-            localStorage[this.storageName] = value ? 'enabled' : 'disabled';
-        else
-            return localStorage[this.storageName] === 'enabled';
-    },
-    getProperty: function (name) {
-        return localStorage[this.storageName + '.' + name];
-    },
-    setProperty: function (name, value) {
-        localStorage[this.storageName + '.' + name] = value;
     }
 };
 
@@ -219,12 +232,12 @@ tw.feature('autoshow', {
     load: function () {
         var me = this;
         var toggleAutoshow = function () {
-            var autoshow = me.getProperty('autoshow') == 'enabled';
+            var autoshow = me.state == 'enabled';
             this.innerText = autoshow
                     ? 'Autoshow [OFF]'
                     : 'Autoshow [ON]';
 
-            me.setProperty('autoshow', autoshow ? 'disabled' : 'enabled');
+            me.state = autoshow ? 'disabled' : 'enabled';
             return false;
         };
 
@@ -232,19 +245,19 @@ tw.feature('autoshow', {
             me.autoshowLink = document.createElement('A');
             me.autoshowLink.className = 'tab-text';
             me.autoshowLink.setAttribute('href', '#');
-            me.autoshowLink.innerText =  me.getProperty('autoshow') == 'enabled' ? 'Autoshow [ON]' : 'Autoshow [OFF]';
+            me.autoshowLink.innerText =  me.state == 'enabled' ? 'Autoshow [ON]' : 'Autoshow [OFF]';
             me.autoshowLink.addEventListener('click', toggleAutoshow);
 
             me.autoshowItem = document.createElement('LI');
             me.autoshowItem.className = 'stream-tab autoshow';
-            me.autoshowItem.style.display = me.isEnabled() ? 'block' : 'hidden';
+            me.autoshowItem.style.display = me.isEnabled ? 'block' : 'hidden';
             me.autoshowItem.appendChild(me.autoshowLink);
 
             selection[0].appendChild(me.autoshowItem);
         });
 
         tw.filter('always', tw.is('#new-tweets-bar'), function (element) {
-            if (me.isEnabled() && me.getProperty('autoshow') == 'enabled')
+            if (me.isEnabled && me.state == 'enabled')
                 element.applyClick();
         });
     },
@@ -254,7 +267,8 @@ tw.feature('autoshow', {
     },
     teardown: function () {
         this.autoshowItem.display = 'hidden';
-    }
+    },
+    properties: ['state']
 });
 
 // Feature: display of new messages count on the global navigation panel
