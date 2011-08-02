@@ -203,7 +203,7 @@ tw.get = function (url, callback) {
 
 // AJAX get request helper function which returns JSON data to the callback
 tw.getJson = function (url, callback) {
-	get(url, function (data) {
+	tw.get(url, function (data) {
 		callback.call(this, eval(data));
 	});
 };
