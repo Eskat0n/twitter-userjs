@@ -11,12 +11,67 @@ window.mutabor=(function(){var c=[];var a=function(h,e){if(!h.querySelector){ret
 // IIFE hack to avoid errors for return statement outside of the function
 (function () {
 
+    var util = {
+        applyClick: function (element) {
+            var event = document.createEvent('MouseEvents');
+            event.initMouseEvent('click', true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+
+            return element.dispatchEvent(event)
+        },
+
+        toArray: function (value) {
+            return Array.prototype.slice.apply(value)
+        }
+    };
+
+    var menu = {
+        createItem: function (text, callback, anchor) {
+            var menuItem = document.createElement('LI');
+            var menuLink = document.createElement('A');
+
+            menuLink.setAttribute('href', '#');
+            menuLink.innerHTML = text;
+            menuLink.addEventListener('click', function (event) {
+                callback.call(event.srcElement, event);
+                return false
+            });
+
+            menuItem.appendChild(menuLink);
+
+            if (anchor)
+                anchor.insertBefore(menuItem);
+            return menuItem
+        },
+
+        createDelimeter: function (anchor) {
+            var delimeter = document.createElement('LI');
+            delimeter.className = 'divider';
+
+            if (anchor)
+                anchor.insertBefore(delimeter);
+            return delimeter
+        }
+    };
+
     mutabor.insert('.dashboard', function (element) {
-        element.style.float = 'right';
+        element.style.float = 'right'
     }).now();
 
     mutabor.insert('.content-main', function (element) {
-        element.style.float = 'left';
+        element.style.float = 'left'
     }).now();
 
+    mutabor.insert('div.new-tweets-bar', function (element) {
+        util.applyClick(element)
+    });
+
+    var lastMenuDelimeter = util.toArray(document.querySelector('ul.nav ul.dropdown-menu li.divider')).pop();
+
+    menu.createDelimeter(lastMenuDelimeter);
+    menu.createItem('UserJs Settings', function () {
+
+    }, lastMenuDelimeter);
+    menu.createItem('Autoshow enabled', function () {
+
+    }, lastMenuDelimeter);
 })();
