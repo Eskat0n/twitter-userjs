@@ -15,8 +15,16 @@ window.mutabor=(function(){var b=[];var a=function(g,d){if(!g.querySelector){ret
         element.style.float = 'right';
     });
 
+    var dashboard = document.querySelector('.dashboard');
+    if (dashboard)
+        dashboard.style.float = 'right';
+
     mutabor.insert('.content-main', function (element) {
         element.style.float = 'left';
     });
+
+    var contentMain = document.querySelector('.content-main');
+    if (contentMain)
+        contentMain.style.float = 'left';
 
 })();

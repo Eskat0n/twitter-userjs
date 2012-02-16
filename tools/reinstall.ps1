@@ -12,10 +12,11 @@ if ((Test-Path $extensions) -eq $true)
 			{	
 				if ((Get-Content $manifest) -like "*$scriptName*")
 				{
-					echo $manifest
 					$source = $scriptName
 					$destination = $extVer.fullname + "\script.js"
 					Copy-Item -Path $source -Destination $destination
+
+					echo "UserJs script copied"
 				}
 			}			
 		}
