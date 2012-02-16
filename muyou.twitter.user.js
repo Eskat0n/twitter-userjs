@@ -16,11 +16,11 @@ window.mutabor=(function(){var c=[];var a=function(h,e){if(!h.querySelector){ret
             var event = document.createEvent('MouseEvents');
             event.initMouseEvent('click', true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
 
-            return element.dispatchEvent(event)
+            return element.dispatchEvent(event);
         },
 
         toArray: function (value) {
-            return Array.prototype.slice.apply(value)
+            return Array.prototype.slice.apply(value);
         }
     };
 
@@ -40,7 +40,7 @@ window.mutabor=(function(){var c=[];var a=function(h,e){if(!h.querySelector){ret
 
             if (anchor)
                 anchor.insertBefore(menuItem);
-            return menuItem
+            return menuItem;
         },
 
         createDelimeter: function (anchor) {
@@ -49,23 +49,23 @@ window.mutabor=(function(){var c=[];var a=function(h,e){if(!h.querySelector){ret
 
             if (anchor)
                 anchor.insertBefore(delimeter);
-            return delimeter
+            return delimeter;
         }
     };
 
     mutabor.insert('.dashboard', function (element) {
-        element.style.float = 'right'
+        element.style.float = 'right';
     }).now();
 
     mutabor.insert('.content-main', function (element) {
-        element.style.float = 'left'
+        element.style.float = 'left';
     }).now();
 
     mutabor.insert('div.new-tweets-bar', function (element) {
-        util.applyClick(element)
+        util.applyClick(element);
     });
 
-    var lastMenuDelimeter = util.toArray(document.querySelector('ul.nav ul.dropdown-menu li.divider')).pop();
+    var lastMenuDelimeter = util.toArray(document.querySelectorAll('li.me ul.dropdown-menu li.divider')).pop();
 
     menu.createDelimeter(lastMenuDelimeter);
     menu.createItem('UserJs Settings', function () {
@@ -74,4 +74,10 @@ window.mutabor=(function(){var c=[];var a=function(h,e){if(!h.querySelector){ret
     menu.createItem('Autoshow enabled', function () {
 
     }, lastMenuDelimeter);
+
+    mutabor.insert(function (element) {
+        console.debug(element);
+    });
+
+    console.debug(document.querySelector('body').innerHTML);
 })();
