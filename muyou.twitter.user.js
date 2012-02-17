@@ -51,6 +51,36 @@ window.mutabor=(function(){var c=[];var a=function(h,e){if(!h.querySelector){ret
         }
     };
 
+    var settings = {
+        _key: 'muyou.userjs.settings',
+        _data: {},
+
+        save: function () {
+            localStorage[this._key] = JSON.stringify(this._data);
+        },
+
+        restore: function () {
+            this._data = JSON.parse(localStorage[this._key] || '{}');
+        },
+
+        get autoshow() {
+            return this._data.autoshow;
+        },
+
+        set autoshow(value) {
+            this._data.autoshow = !!value;
+            this.save();
+        },
+
+        get autoshowText() {
+            return this._data.autoshow
+                ? 'Autoshow enabled'
+                : 'Autoshow disabled';
+        }
+    };
+
+    settings.restore();
+
     mutabor.insert('.dashboard', function (element) {
         element.style.float = 'right';
     }).now();
@@ -69,8 +99,9 @@ window.mutabor=(function(){var c=[];var a=function(h,e){if(!h.querySelector){ret
     menu.createItem('UserJs Settings', function () {
 
     }, lastMenuDelimeter);
-    menu.createItem('Autoshow enabled', function () {
-
+    menu.createItem(settings.autoshowText, function () {
+        settings.autoshow = !settings.autoshow;
+        this.innerHTML = settings.autoshowText;
     }, lastMenuDelimeter);
 
 })();
