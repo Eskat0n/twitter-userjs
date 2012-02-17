@@ -31,13 +31,13 @@ window.mutabor=(function(){var c=[];var a=function(h,e){if(!h.querySelector){ret
             menuLink.innerHTML = text;
             menuLink.addEventListener('click', function (event) {
                 callback.call(event.srcElement, event);
-                return false
+                return false;
             });
 
             menuItem.appendChild(menuLink);
 
             if (anchor)
-                anchor.insertBefore(menuItem);
+                return anchor.parentNode.insertBefore(menuItem, anchor);
             return menuItem;
         },
 
@@ -46,7 +46,7 @@ window.mutabor=(function(){var c=[];var a=function(h,e){if(!h.querySelector){ret
             delimeter.className = 'divider';
 
             if (anchor)
-                anchor.insertBefore(delimeter);
+                return anchor.parentNode.insertBefore(delimeter, anchor);
             return delimeter;
         }
     };
@@ -73,9 +73,4 @@ window.mutabor=(function(){var c=[];var a=function(h,e){if(!h.querySelector){ret
 
     }, lastMenuDelimeter);
 
-    mutabor.insert(function (element) {
-        console.debug(element);
-    });
-
-    console.debug(document.querySelector('body').innerHTML);
 })();
