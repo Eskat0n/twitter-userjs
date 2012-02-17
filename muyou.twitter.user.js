@@ -1,8 +1,6 @@
 // ==UserScript==
 // @match http://twitter.com/*
 // @match https://twitter.com/*
-// @match http://api.twitter.com/*
-// @match https://api.twitter.com/*
 // ==/UserScript==
 
 // mutabor v0.1
