@@ -17,37 +17,68 @@ window.mutabor=(function(){var c=[];var a=function(h,e){if(!h.querySelector){ret
             return element.dispatchEvent(event);
         },
 
+        applyCss: function (element, styles) {
+            for (var selector in styles)
+                if (styles.hasOwnProperty(selector))
+                    util.toArray(element.querySelectorAll(selector)).forEach(function (e) {
+                        for (var prop in styles[selector])
+                            if (styles[selector].hasOwnProperty(prop))
+                                e.styles[prop] = styles[selector][prop];
+                    });
+        },
+
         toArray: function (value) {
             return Array.prototype.slice.apply(value);
         }
     };
 
-    var menu = {
-        createItem: function (text, callback, anchor) {
-            var menuItem = document.createElement('LI');
-            var menuLink = document.createElement('A');
+    var ui = {
+        menu: {
+            createItem: function (text, anchor, callback) {
+                var menuItem = document.createElement('LI');
+                var menuLink = document.createElement('A');
 
-            menuLink.setAttribute('href', '#');
-            menuLink.innerHTML = text;
-            menuLink.addEventListener('click', function (event) {
-                callback.call(event.srcElement, event);
-                return false;
-            });
+                menuLink.setAttribute('href', '#');
+                menuLink.innerHTML = text;
+                menuLink.addEventListener('click', function (event) {
+                    callback.call(event.srcElement, event);
+                    return false;
+                });
 
-            menuItem.appendChild(menuLink);
-
-            if (anchor)
+                menuItem.appendChild(menuLink);
                 return anchor.parentNode.insertBefore(menuItem, anchor);
-            return menuItem;
+            },
+
+            createDelimeter: function (anchor) {
+                var delimeter = document.createElement('LI');
+                delimeter.className = 'divider';
+
+                return anchor.parentNode.insertBefore(delimeter, anchor);
+            }
         },
 
-        createDelimeter: function (anchor) {
-            var delimeter = document.createElement('LI');
-            delimeter.className = 'divider';
+        createPopup: function (params) {
+            var dialogWrapper = document.querySelector('.twttr-dialog-wrapper');
 
-            if (anchor)
-                return anchor.parentNode.insertBefore(delimeter, anchor);
-            return delimeter;
+            var content;
+
+            dialogWrapper.style.display = 'block';
+            dialogWrapper.innerHTML =
+                '<div class="twttr-dialog-container" style="top: 0px; width: ' + (params.width || 500) + 'px; height: auto; visibility: visible;">' +
+                    '<div class="twttr-dialog">' +
+                        '<div class="twttr-dialog-header js-twttr-dialog-draggable">' +
+                            '<h3>' + params.title + '</h3> <div class="twttr-dialog-close"><b>×</b></div>' +
+                        '</div>' +
+                        '<div class="twttr-dialog-inside">' + content + '</div>' +
+                    '</div>' +
+                '</div>';
+
+            dialogWrapper.querySelector('.twttr-dialog-close').addEventListener('click', function () {
+                dialogWrapper.innerHTML = '';
+                dialogWrapper.style.display = 'none';
+
+                return false;
+            });
         }
     };
 
@@ -70,38 +101,45 @@ window.mutabor=(function(){var c=[];var a=function(h,e){if(!h.querySelector){ret
         set autoshow(value) {
             this._data.autoshow = !!value;
             this.save();
-        },
-
-        get autoshowText() {
-            return this._data.autoshow
-                ? 'Autoshow enabled'
-                : 'Autoshow disabled';
         }
     };
 
     settings.restore();
 
-    mutabor.insert('.dashboard', function (element) {
-        element.style.float = 'right';
-    }).now();
+    // Column swapping
+    (function () {
 
-    mutabor.insert('.content-main', function (element) {
-        element.style.float = 'left';
-    }).now();
+        mutabor.insert('.dashboard', function (element) {
+            element.style.float = 'right';
+        }).now();
 
-    mutabor.insert('div.new-tweets-bar', function (element) {
-        util.applyClick(element);
-    });
+        mutabor.insert('.content-main', function (element) {
+            element.style.float = 'left';
+        }).now();
 
-    var lastMenuDelimeter = util.toArray(document.querySelectorAll('li.me ul.dropdown-menu li.divider')).pop();
+    })();
 
-    menu.createDelimeter(lastMenuDelimeter);
-    menu.createItem('UserJs Settings', function () {
+    // Tweets autoshow
+    (function () {
 
-    }, lastMenuDelimeter);
-    menu.createItem(settings.autoshowText, function () {
-        settings.autoshow = !settings.autoshow;
-        this.innerHTML = settings.autoshowText;
-    }, lastMenuDelimeter);
+        mutabor.insert('div.new-tweets-bar', function (element) {
+            util.applyClick(element);
+        });
+
+    })();
+
+    // Create menu
+    (function () {
+
+        var lastMenuDelimeter = util.toArray(document.querySelectorAll('li.me ul.dropdown-menu li.divider')).pop();
+
+        ui.menu.createDelimeter(lastMenuDelimeter);
+        ui.menu.createItem('UserJs Settings', lastMenuDelimeter, function () {
+            ui.createPopup({
+                title: 'UserJs Settings'
+            });
+        });
+
+    })();
 
 })();
