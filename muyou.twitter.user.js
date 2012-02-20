@@ -17,14 +17,20 @@ window.mutabor=(function(){var c=[];var a=function(h,e){if(!h.querySelector){ret
             return element.dispatchEvent(event);
         },
 
+        hashForEach: function (object, callback) {
+            for (var key in object)
+                if (object.hasOwnProperty(key))
+                    callback.call(object, object[key], key);
+        },
+
         applyCss: function (element, styles) {
-            for (var selector in styles)
-                if (styles.hasOwnProperty(selector))
-                    util.toArray(element.querySelectorAll(selector)).forEach(function (e) {
-                        for (var prop in styles[selector])
-                            if (styles[selector].hasOwnProperty(prop))
-                                e.styles[prop] = styles[selector][prop];
+            util.hashForEach(styles, function (style, selector) {
+                util.toArray(element.querySelectorAll(selector)).forEach(function (e) {
+                    util.hashForEach(style, function (value, prop) {
+                        e.styles[prop] = value;
                     });
+                });
+            });
         },
 
         toArray: function (value) {
